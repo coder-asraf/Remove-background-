@@ -1,0 +1,8 @@
+{
+  "name": "Cutout Studio",
+  "description": "Professional Photo Editor, AI Background Remover, Passport Photo Maker & Print Studio with complete Native Android Kotlin Project.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

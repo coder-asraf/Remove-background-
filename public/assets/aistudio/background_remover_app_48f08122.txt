@@ -1,0 +1,1242 @@
+PROJECT: CUTOUT STUDIO
+package name:-com.darklord.bgrm
+Professional Android Photo Editor, AI Background Remover, Passport Photo Maker & Print Studio
+
+ROLE
+
+Act as a senior Android application architect, Kotlin engineer, image-processing specialist, computer vision engineer, API integration developer, UI/UX designer, and automated testing engineer.
+
+Build a complete, production-oriented native Android application named Cutout Studio.
+
+This must be a real Android application, not a website, a WebView application, a Flutter application, or a user-interface mockup.
+
+Use Kotlin and Jetpack Compose.
+
+The final project must be compatible with GitHub repositories and GitHub Actions so that I can compile it into an APK without requiring Android Studio on my phone.
+
+Do not stop after generating a plan or a user interface. Implement the complete application, including working image processing, API integration, previews, PDF generation, project storage, error handling, tests, and build configuration.
+
+If a feature depends on an unavailable service, credential, or unsupported environment, clearly identify the limitation rather than pretending it works.
+
+==================================================
+
+1. PROJECT OBJECTIVES
+   ==================================================
+
+Build an Android application that allows users to:
+
+1. Remove photo backgrounds using AI.
+2. Preserve transparent backgrounds during editing.
+3. Rotate images without losing transparency.
+4. Crop and resize images precisely.
+5. Change backgrounds to solid colors.
+6. Adjust brightness, contrast, saturation, and sharpness.
+7. Create passport photos and ID photos.
+8. Select predefined and custom photo dimensions.
+9. Arrange multiple photographs on a printable sheet.
+10. Generate accurate, print-ready PDF documents.
+11. Preview the final edited image.
+12. Preview the final print layout.
+13. Export PNG and JPEG files.
+14. Save and reopen editing projects.
+15. Print directly through Android's printing framework.
+16. Share images and PDFs.
+17. Perform all ordinary editing and printing operations without an internet connection.
+18. Build and distribute the application through GitHub.
+
+The primary priorities are correctness, offline capability, privacy, image quality, reliable API integration, and accurate printing.
+
+==================================================
+2. NON-NEGOTIABLE ARCHITECTURE: NO SELF-HOSTED SERVER
+
+The application must not require a self-hosted backend server for its normal functionality.
+
+Do not require the user to run Node.js, Express, PHP, Python, Docker, or any other server to use the Android app.
+
+All the following operations must run locally on the Android device:
+
+- Image import.
+- EXIF orientation correction.
+- Rotation.
+- Cropping.
+- Zoom and pan.
+- Image resizing.
+- Background compositing.
+- Brightness and contrast adjustments.
+- Saturation and sharpness adjustments.
+- Passport photo sizing.
+- Print-sheet layout.
+- Live previews.
+- PNG export.
+- JPEG export.
+- PDF generation.
+- Project saving.
+- Project restoration.
+- File sharing.
+- Android printing.
+
+These features must continue to work in airplane mode.
+
+Background removal is different because the preferred AI provider is an online API.
+
+Implement the following background-removal architecture:
+
+A. Primary provider:
+BGNinja API, accessed directly from the Android application only if the provider's official documentation supports this use and its authentication requirements are suitable.
+
+B. Optional offline provider:
+A genuine on-device background-removal model, if a compatible model can be integrated and distributed legally.
+
+C. Provider interface:
+A common BackgroundRemovalProvider interface that allows the app to switch between supported providers.
+
+D. Fallback behavior:
+If internet access is unavailable, continue allowing all local editing and printing. Explain that online background removal requires a connection unless a working offline model is installed.
+
+Do not create a mandatory self-hosted server.
+
+Do not silently claim that a feature works offline when it depends on a remote API.
+
+Do not simulate AI background removal by merely drawing a colored rectangle behind the original photograph.
+
+==================================================
+3. TECHNOLOGY STACK
+
+Use:
+
+- Kotlin.
+- Native Android SDK.
+- Jetpack Compose.
+- Material 3.
+- Gradle Kotlin DSL.
+- AndroidX.
+- Kotlin coroutines.
+- ViewModel.
+- StateFlow.
+- Activity Result APIs.
+- Android Photo Picker or OpenDocument.
+- Android Bitmap and Canvas APIs.
+- Android Matrix for geometric transformations.
+- Android PdfDocument or an appropriate PDF library.
+- Android Print Framework.
+- Room or another suitable local database for project metadata.
+- App-private file storage for original and processed images.
+- OkHttp or another maintained HTTP client for API calls.
+- GitHub Actions for automated builds.
+
+Choose compatible, stable dependency versions.
+
+Avoid unnecessary dependencies and deprecated APIs.
+
+Set a documented minimum Android SDK version based on actual dependency requirements.
+
+Use a modular architecture.
+
+Do not use Dart or Flutter.
+
+Do not implement the application interface using a WebView.
+
+==================================================
+4. CRITICAL BUG FIX: ROTATION MUST PRESERVE TRANSPARENCY
+
+CURRENT BUG:
+
+The background is successfully removed, but rotating the image by 90 degrees causes the transparent background to disappear.
+
+This must be fixed at the image-processing level.
+
+Requirements:
+
+1. Use an appropriate alpha-capable bitmap format, such as ARGB_8888.
+2. Preserve the alpha channel through every geometric transformation.
+3. Preserve partially transparent edge pixels.
+4. Never convert transparent images to JPEG during editing.
+5. Never fill transparent rotation areas with white or black unless explicitly requested.
+6. Calculate the transformed image boundaries correctly.
+7. Swap effective width and height when rotating by 90 or 270 degrees.
+8. Support 90°, 180°, and 270° rotation.
+9. Support arbitrary rotation angles.
+10. Prevent unintended image clipping.
+11. Prevent stretching and distortion.
+12. Preserve image quality.
+13. Keep the original image unchanged.
+14. Support undo and redo.
+15. Handle EXIF orientation correctly.
+16. Avoid applying EXIF rotation twice.
+17. Do not call the background-removal API again after rotation.
+
+When the user rotates an already transparent image, transform the existing transparent image.
+
+Do not send the original photograph back to the AI service merely because the user rotated it.
+
+For arbitrary angles, calculate a suitable destination canvas and transform around the correct center.
+
+Use a transparent fill when transparency is required.
+
+Use appropriate filtering to reduce jagged edges.
+
+Create automated regression tests for transparent PNG rotation.
+
+Acceptance test:
+
+Import a transparent PNG, rotate it 90 degrees clockwise, and verify that the image remains transparent, correctly oriented, and uncropped.
+
+==================================================
+5. SINGLE SOURCE OF TRUTH FOR ALL IMAGE OPERATIONS
+
+The editor, preview, image exporter, print layout, and PDF generator must use one consistent editing state.
+
+Do not allow separate components to maintain conflicting versions of the photograph.
+
+Create an immutable or safely managed editing-state model.
+
+Suggested model:
+
+ImageProject:
+
+- projectId
+- originalImageReference
+- backgroundRemovedImageReference
+- rotationDegrees
+- cropRectangle
+- horizontalFlip
+- verticalFlip
+- backgroundMode
+- backgroundColor
+- brightness
+- contrast
+- saturation
+- sharpness
+- selectedPhotoPreset
+- customPhotoWidthMm
+- customPhotoHeightMm
+- selectedPaperPreset
+- customPaperWidthMm
+- customPaperHeightMm
+- pageOrientation
+- copies
+- marginMm
+- horizontalGapMm
+- verticalGapMm
+- cutGuidesEnabled
+- cropMarksEnabled
+- photoNumbersEnabled
+- imageRevision
+- projectName
+- savedAt
+
+Adapt the model as necessary, but retain all required capabilities.
+
+Implement shared services such as:
+
+- ImageImportManager
+- ExifOrientationManager
+- BackgroundRemovalManager
+- ImageTransformEngine
+- ImageCropManager
+- ImageAdjustmentEngine
+- FinalImageRenderer
+- PreviewRenderer
+- PrintLayoutEngine
+- PdfExportManager
+- ImageExportManager
+- ProjectStorageManager
+
+Create one central rendering function:
+
+renderFinalBitmap(projectState)
+
+This function must generate the final edited image from the source image and current editing parameters.
+
+Document and consistently apply the transformation order.
+
+The output must reflect:
+
+1. EXIF orientation correction.
+2. Rotation.
+3. Cropping.
+4. Flip operations.
+5. Image adjustments.
+6. Background compositing, when selected.
+7. Final output sizing.
+
+Use the actual alpha channel throughout the pipeline.
+
+Do not permanently modify the source image during ordinary editing.
+
+Cache rendered results when appropriate, but invalidate the cache whenever a relevant edit changes.
+
+Never use an outdated cached bitmap for export.
+
+==================================================
+6. CRITICAL BUG FIX: THE ROTATED IMAGE MUST APPEAR IN THE PDF
+
+CURRENT BUG:
+
+The editor shows the rotated image, but the generated PDF contains the original unrotated image.
+
+Fix the root cause.
+
+The PDF generator must receive the final edited image produced by renderFinalBitmap(projectState).
+
+Never load the original file again inside the PDF generator to bypass the edited state.
+
+Never use a stale thumbnail or preview bitmap for final output.
+
+Never apply rotation a second time during PDF generation.
+
+Implement a pipeline similar to:
+
+finalBitmap = renderFinalBitmap(projectState)
+
+printLayout = generatePrintLayout(
+projectState,
+finalBitmap
+)
+
+pdf = generatePdf(printLayout)
+
+The exact implementation can differ, but the data flow must remain consistent.
+
+The same final rendered image must be used for:
+
+- Editor preview.
+- PNG export.
+- JPEG export.
+- Print-sheet preview.
+- PDF generation.
+- Android print output.
+- Saved final image.
+
+The PDF must reflect rotation, cropping, background color, adjustments, and selected output dimensions.
+
+Create regression tests that inspect the generated PDF or its rendered page to verify the correct image orientation.
+
+Acceptance test:
+
+1. Import a portrait photograph.
+2. Rotate it by 90 degrees.
+3. Confirm that the editor preview shows the rotated image.
+4. Generate a PDF.
+5. Render the PDF page to an image.
+6. Confirm that the PDF contains the rotated image rather than the original orientation.
+
+==================================================
+7. CRITICAL BUG FIX: LIVE PREVIEW MUST WORK
+
+CURRENT BUG:
+
+The live preview does not work correctly or fails to display the latest edits.
+
+Implement a functional preview system.
+
+Requirements:
+
+- Show the actual current image.
+- Update after every editing operation.
+- Update after rotation.
+- Update after cropping.
+- Update after changing background color.
+- Update after brightness and contrast adjustments.
+- Update after resizing.
+- Update after selecting a different photo preset.
+- Update after changing print settings.
+- Prevent stale asynchronous rendering results from replacing newer results.
+- Use revision IDs or equivalent state validation.
+- Cancel obsolete rendering work when practical.
+- Display loading indicators.
+- Display understandable errors.
+- Support zoom and pan.
+- Provide fit-to-screen and actual-size viewing.
+- Keep full-resolution image data available for export.
+
+Use ViewModel and StateFlow to manage editing state.
+
+Do not store unnecessary full-resolution bitmap copies directly in Compose state.
+
+Use suitable background dispatchers for expensive image-processing operations.
+
+Use lower-resolution previews if necessary for performance, but always use full-resolution source data for final export.
+
+The print preview must display the same final rendered image and placement coordinates used by the PDF generator.
+
+==================================================
+8. BGNINJA API INTEGRATION
+
+Preferred background-removal provider:
+
+BGNinja
+
+API endpoint:
+
+https://bgninja.com/api/remove
+
+Before implementation, inspect the provider's official API documentation.
+
+Determine the correct:
+
+- HTTP method.
+- Authentication mechanism.
+- Request format.
+- Upload field names.
+- Supported file formats.
+- Maximum upload size.
+- Response format.
+- Error responses.
+- Usage restrictions.
+- Pricing or account requirements.
+
+Do not invent request parameters or authentication methods.
+
+Do not claim the integration has been tested unless an actual request has succeeded.
+
+Implement a BackgroundRemovalProvider interface.
+
+Implement the BGNinja adapter according to the verified API specification.
+
+Requirements:
+
+- Upload photographs correctly.
+- Use the correct authentication method.
+- Handle timeouts.
+- Handle HTTP failures.
+- Handle invalid responses.
+- Decode returned image bytes or URLs safely.
+- Validate returned image dimensions.
+- Preserve transparency when the provider returns it.
+- Detect invalid or unexpected opaque responses.
+- Prevent duplicate requests.
+- Support retrying temporary failures.
+- Provide user-friendly errors.
+- Cache successful results.
+- Avoid repeating requests for ordinary editing operations.
+- Cancel requests when appropriate.
+- Avoid logging image data or secrets.
+
+Use HTTPS.
+
+Use coroutines for asynchronous operations.
+
+Never block the main UI thread.
+
+If the API returns an image URL, validate it and download the image securely. Do not accept arbitrary insecure URLs or blindly follow untrusted redirects.
+
+==================================================
+9. API KEY AND SECURITY STRATEGY
+
+The application must not require a self-hosted server.
+
+However, never hardcode a private API key into Kotlin source code, Android resources, BuildConfig, or the APK.
+
+An APK can be reverse-engineered.
+
+Implement these options:
+
+OPTION A:
+Direct BGNinja integration if the provider officially supports a suitable public-client authentication mechanism or explicitly accepts the associated security trade-offs.
+
+OPTION B:
+Allow users to enter their own API key locally if provider terms permit this approach.
+
+Store user-supplied credentials only as securely as the platform allows, using Android Keystore-backed encryption where appropriate.
+
+Clearly explain that storing a key locally does not make it impossible to extract from a compromised device.
+
+Never log or export API keys.
+
+Do not include API keys in crash reports.
+
+OPTION C:
+Provide an optional, separately deployable backend proxy for users who want stronger centralized credential protection.
+
+This proxy must remain optional.
+
+The main application must continue to work for all local editing and printing operations without it.
+
+If no secure direct integration is possible, explain the limitation honestly and present the available alternatives.
+
+Do not falsely promise that a private API key is secure merely because it is stored in encrypted preferences.
+
+==================================================
+10. OPTIONAL OFFLINE AI BACKGROUND REMOVAL
+
+Design the application so a genuine on-device background-removal model can be integrated.
+
+If a compatible, maintained model is available, integrate it using an appropriate mobile inference framework, such as TensorFlow Lite, LiteRT, ONNX Runtime Mobile, or another suitable supported option.
+
+Select a real model that:
+
+- Supports portrait or general foreground segmentation.
+- Can run on compatible Android devices.
+- Has a license that permits the intended distribution.
+- Has documented input and output formats.
+- Can produce a foreground mask or transparent output.
+
+Do not invent a model or pretend a model is bundled when it is not.
+
+Do not assume a generic image-classification model can remove backgrounds.
+
+If an offline model is implemented:
+
+- Include model setup and distribution instructions.
+- Apply the foreground mask correctly.
+- Preserve fine edges as much as practical.
+- Handle hair and partially transparent boundaries.
+- Provide progress indicators.
+- Handle insufficient memory.
+- Run inference off the main thread.
+- Allow the user to choose online or offline processing.
+- Avoid downloading model files without informing the user.
+
+If a usable model cannot be integrated in the current environment, keep the provider interface ready and clearly label offline AI background removal as unavailable until configured.
+
+All other editing features must remain fully functional offline.
+
+==================================================
+11. BACKGROUND COLOR EDITOR
+
+Support:
+
+- Transparent.
+- White.
+- Light blue.
+- Blue.
+- Red.
+- Light gray.
+- Gray.
+- Black.
+- Custom color.
+
+Requirements:
+
+- Live preview.
+- Alpha-aware compositing.
+- No unnecessary API calls when changing colors.
+- Smooth subject edges.
+- No black halos.
+- PNG export with transparency.
+- Solid-background PNG export.
+- JPEG export with the selected background.
+
+Use a checkerboard pattern only in the preview.
+
+Never include the checkerboard in the final image.
+
+When transparency is selected, preserve the alpha channel.
+
+When a solid color is selected, composite the foreground over that color using correct alpha blending.
+
+==================================================
+12. IMAGE EDITING TOOLS
+
+Implement:
+
+- Rotate left 90°.
+- Rotate right 90°.
+- Rotate 180°.
+- Fine rotation slider.
+- Reset rotation.
+- Crop.
+- Freeform crop.
+- Aspect-ratio crop.
+- Zoom.
+- Pan.
+- Horizontal flip.
+- Vertical flip.
+- Brightness.
+- Contrast.
+- Saturation.
+- Sharpness where practical.
+- Undo.
+- Redo.
+- Reset edits.
+- Before-and-after comparison.
+
+Crop presets:
+
+- Free.
+- 1:1.
+- 3:4.
+- 4:3.
+- 4:5.
+- 5:7.
+- 2:3.
+- Passport portrait.
+- Custom aspect ratio.
+
+Ensure cropping works correctly after rotation.
+
+Prevent invalid crop coordinates.
+
+Do not stretch faces or bodies to fit a preset.
+
+Offer crop-to-fill and fit-with-background options.
+
+Use non-destructive editing parameters wherever practical.
+
+==================================================
+13. PASSPORT AND ID PHOTO BUILDER
+
+Provide generic presets:
+
+- 35 × 45 mm.
+- 40 × 50 mm.
+- 30 × 40 mm.
+- 33 × 48 mm.
+- 2 × 2 inches.
+- Custom dimensions.
+
+Allow units in millimeters and inches.
+
+Support:
+
+- Precise physical sizing.
+- Subject positioning.
+- Crop alignment guides.
+- Optional safe-area guides.
+- Head-positioning guidance where practical.
+- Resolution warnings.
+- High-resolution exports.
+
+These presets are generic and must not be represented as universally valid official passport specifications.
+
+If verified country-specific rules can be maintained, provide a country and document-type selector.
+
+Do not invent official document requirements.
+
+==================================================
+14. PRINT SHEET BUILDER
+
+Paper presets:
+
+- A4.
+- A5.
+- US Letter.
+- US Legal.
+- 4 × 6 inches.
+- 5 × 7 inches.
+- Custom paper dimensions.
+
+Support:
+
+- Portrait orientation.
+- Landscape orientation.
+- Copy count.
+- Automatic grid arrangement.
+- Page margins.
+- Horizontal gaps.
+- Vertical gaps.
+- Cut guides.
+- Crop marks.
+- Optional numbering.
+- Center alignment.
+- Fit-to-page.
+- Maximum-copy calculation.
+- Page overflow warnings.
+- Multiple-page output.
+
+Use physical measurements.
+
+Do not use screen pixels as print dimensions.
+
+Keep the layout model in millimeters or another consistent physical unit.
+
+Convert to PDF points using:
+
+points = millimeters × 72 / 25.4
+
+If Android PdfDocument requires pixel dimensions, convert from physical dimensions using an explicit rendering DPI:
+
+pixels = millimeters × DPI / 25.4
+
+Keep screen density separate from print resolution.
+
+Ensure that every image placement stays inside the printable page area.
+
+Show the number of copies that fit on each page.
+
+Allow exact copy counts across multiple pages.
+
+Provide a one-page maximum-fill option.
+
+Warn users when the requested layout is impossible.
+
+==================================================
+15. PDF GENERATION
+
+Implement local PDF generation using Android PdfDocument or another appropriate library.
+
+PDF generation must work without internet access.
+
+Support:
+
+- A4.
+- A5.
+- Letter.
+- Legal.
+- 4 × 6 inches.
+- 5 × 7 inches.
+- Custom paper sizes.
+- Portrait and landscape.
+- Multiple pages.
+- Exact photo dimensions.
+- Multiple copies.
+- Margins.
+- Gaps.
+- Cut guides.
+- Crop marks.
+- Optional numbering.
+- Save to device.
+- Share.
+- Open with compatible applications.
+- Android system printing.
+
+Requirements:
+
+- Use the final edited bitmap.
+- Preserve the correct orientation.
+- Do not apply rotation twice.
+- Respect physical dimensions.
+- Avoid clipping.
+- Avoid stretching.
+- Use suitable output resolution.
+- Avoid unnecessarily huge PDF files.
+- Validate page boundaries.
+- Show export progress.
+- Handle export errors.
+
+For predictable printing, offer a solid background when required.
+
+Never create the PDF using the original image if the user has edited it.
+
+==================================================
+16. PRINT PREVIEW
+
+Create a dedicated print preview screen.
+
+Display:
+
+- Paper dimensions.
+- Page orientation.
+- Photo dimensions.
+- Number of copies.
+- Margins.
+- Spacing.
+- Cut guides.
+- Crop marks.
+- Page navigation.
+- Multiple-page layout.
+
+Use the same PrintLayoutEngine for preview and PDF generation.
+
+Do not implement two separate layout algorithms.
+
+Use the exact same placement coordinates.
+
+Use the final rendered image for every copy.
+
+Support zoom and pan.
+
+Allow the user to generate and inspect a PDF before printing.
+
+Allow the user to return to editing without losing changes.
+
+The preview must match the generated PDF as closely as practical.
+
+==================================================
+17. IMAGE EXPORT
+
+Support:
+
+- Transparent PNG.
+- Solid-background PNG.
+- High-quality JPEG.
+- Print-ready PDF.
+- Android share sheet.
+- Android document picker.
+- Android print framework.
+
+For JPEG:
+
+Composite transparency onto the selected background before encoding.
+
+Never assume JPEG supports alpha transparency.
+
+Use Android's supported file-saving mechanisms.
+
+Use FileProvider or another suitable secure sharing mechanism.
+
+Avoid broad storage permissions when a system picker can be used.
+
+Show clear success and error messages.
+
+Use filenames such as:
+
+cutout_studio_photo.png
+cutout_studio_photo.jpg
+cutout_studio_print.pdf
+
+==================================================
+18. LOCAL PROJECT STORAGE
+
+Allow users to save and reopen projects.
+
+Save:
+
+- Original image.
+- Background-removed image.
+- Rotation.
+- Crop.
+- Background color.
+- Adjustments.
+- Photo dimensions.
+- Print settings.
+- Copy count.
+- Export configuration.
+
+Use app-private storage for image assets.
+
+Use Room or another appropriate local database for project metadata.
+
+Do not store large image binaries directly in database rows unless there is a justified reason.
+
+Reopening a project must restore the editing state.
+
+Provide:
+
+- Rename project.
+- Delete project.
+- Duplicate project where practical.
+- Recover gracefully from corrupted project data.
+
+Do not store only a flattened preview if users are expected to continue editing later.
+
+All project-management operations must work offline.
+
+==================================================
+19. USER INTERFACE
+
+Use Jetpack Compose and Material 3.
+
+Create:
+
+1. Home.
+2. Import Photo.
+3. Background Removal.
+4. Image Editor.
+5. Passport Photo.
+6. Print Layout.
+7. Print Preview.
+8. Export.
+9. Saved Projects.
+10. Settings.
+
+Home actions:
+
+- Remove Background.
+- Create Passport Photo.
+- Create ID Photo.
+- Print Multiple Copies.
+- Open Saved Project.
+
+Editor layout:
+
+- Large central preview.
+- Rotation controls.
+- Crop controls.
+- Background selector.
+- Adjustment controls.
+- Undo and redo.
+- Before-and-after comparison.
+- Export action.
+
+Support:
+
+- Light theme.
+- Dark theme.
+- Responsive Android layouts.
+- Small screens.
+- Portrait and landscape.
+- Accessible touch targets.
+- Loading indicators.
+- Meaningful error messages.
+- Confirmation before destructive operations.
+
+Avoid unnecessary animations.
+
+The interface should feel polished and professional without compromising performance.
+
+==================================================
+20. PERFORMANCE AND MEMORY
+
+The app must work on ordinary Android phones.
+
+Requirements:
+
+- Decode images efficiently.
+- Avoid unnecessary full-resolution bitmap copies.
+- Process large images off the main thread.
+- Use suitable coroutine dispatchers.
+- Cache previews intelligently.
+- Invalidate stale previews.
+- Prevent asynchronous race conditions.
+- Handle low-memory situations.
+- Dispose of obsolete resources safely.
+- Preserve original image quality for exports.
+- Support cancellation where practical.
+- Avoid unnecessary API calls.
+- Avoid unnecessary image recompression.
+- Keep the interface responsive.
+
+A reduced-resolution preview may be used for speed, but final exports must use appropriate high-resolution data.
+
+Never silently lower final export quality.
+
+If a device cannot handle an image, display an understandable error and preserve the original project.
+
+==================================================
+21. PRIVACY AND SECURITY
+
+- Perform local editing locally.
+- Use HTTPS for online services.
+- Do not log photographs.
+- Do not log API keys.
+- Do not send photographs to unrelated services.
+- Explain when a photograph is uploaded for background removal.
+- Request only necessary Android permissions.
+- Use secure local storage where appropriate.
+- Allow deletion of projects and cached image data.
+- Validate image files before decoding.
+- Apply upload-size limits.
+- Handle untrusted image URLs safely.
+- Avoid unnecessary collection of personal information.
+
+Do not claim that a photograph never leaves the device when online background removal is enabled.
+
+==================================================
+22. AUTOMATED TESTING
+
+Write unit tests for the image-processing engine, print layout, and PDF generation.
+
+At minimum, test:
+
+TEST 1:
+Rotate a transparent image 90° clockwise.
+
+Expected:
+Correct orientation and preserved transparency.
+
+TEST 2:
+Rotate a transparent image 270°.
+
+Expected:
+Correct orientation and preserved transparency.
+
+TEST 3:
+Rotate an image 180°.
+
+Expected:
+Correct orientation and dimensions.
+
+TEST 4:
+Rotate an image by an arbitrary angle.
+
+Expected:
+No unintended cropping and transparent corners where appropriate.
+
+TEST 5:
+Import an image with EXIF orientation.
+
+Expected:
+Correct display without double rotation.
+
+TEST 6:
+Remove the background using the configured API.
+
+Expected:
+The result is validated and cached.
+
+TEST 7:
+Rotate an image after background removal.
+
+Expected:
+No unnecessary second API call.
+
+TEST 8:
+Rotate and crop an image.
+
+Expected:
+The preview shows the latest edit.
+
+TEST 9:
+Export a rotated image as PNG.
+
+Expected:
+Correct orientation and transparency.
+
+TEST 10:
+Export a rotated image as JPEG.
+
+Expected:
+Correct orientation and selected background color.
+
+TEST 11:
+Generate a PDF after rotating an image.
+
+Expected:
+The PDF contains the rotated image.
+
+TEST 12:
+Generate a PDF after cropping.
+
+Expected:
+The PDF contains the cropped image.
+
+TEST 13:
+Generate multiple copies on an A4 page.
+
+Expected:
+All copies use the final edited image.
+
+TEST 14:
+Generate a multi-page PDF.
+
+Expected:
+Correct page dimensions and copy count.
+
+TEST 15:
+Change the paper size.
+
+Expected:
+The preview and PDF use the new dimensions.
+
+TEST 16:
+Perform rapid successive edits.
+
+Expected:
+No stale preview replaces the latest state.
+
+TEST 17:
+Simulate an API timeout.
+
+Expected:
+A useful error and working retry option.
+
+TEST 18:
+Simulate an invalid API response.
+
+Expected:
+The result is rejected without destroying existing edits.
+
+TEST 19:
+Save and reopen a project.
+
+Expected:
+Editing state and print settings are restored.
+
+TEST 20:
+Export transparent pixels with partial alpha.
+
+Expected:
+No unexpected black halos.
+
+TEST 21:
+Test JPEG compositing.
+
+Expected:
+Transparent pixels become the selected background color.
+
+TEST 22:
+Test page overflow.
+
+Expected:
+Invalid layouts are rejected or clearly reported.
+
+TEST 23:
+Disable network access.
+
+Expected:
+Rotation, cropping, adjustments, preview, PNG/JPEG export, project storage, and PDF generation continue working.
+
+TEST 24:
+Attempt offline background removal without an installed offline model.
+
+Expected:
+The app clearly reports that an online connection or configured offline model is required.
+
+Do not claim tests have passed unless they have actually run.
+
+==================================================
+23. GITHUB REPOSITORY
+
+Generate a complete GitHub-ready project.
+
+Include:
+
+- settings.gradle.kts.
+- Root build.gradle.kts.
+- gradle.properties.
+- Gradle wrapper files.
+- app/build.gradle.kts.
+- AndroidManifest.xml.
+- Kotlin source files.
+- Compose UI.
+- Image-processing modules.
+- API integration.
+- Local storage.
+- PDF generation.
+- Unit tests.
+- Instrumented tests where practical.
+- README.md.
+- .gitignore.
+- .github/workflows/android.yml.
+
+Include any additional files required for a successful build.
+
+Never commit API credentials or signing keys.
+
+==================================================
+24. GITHUB ACTIONS APK BUILD
+
+Create a GitHub Actions workflow:
+
+.github/workflows/android.yml
+
+The workflow must:
+
+1. Check out the repository.
+2. Set up a compatible JDK.
+3. Configure the Android SDK as required.
+4. Configure Gradle caching.
+5. Run unit tests.
+6. Build the debug APK.
+7. Upload the APK as a workflow artifact.
+
+Use valid Gradle tasks, including where applicable:
+
+./gradlew testDebugUnitTest
+./gradlew assembleDebug
+
+Ensure that the generated project actually defines these tasks.
+
+Include the Gradle wrapper.
+
+Document how to download the APK from a successful GitHub Actions run.
+
+If release signing is supported, use GitHub Secrets for signing credentials.
+
+Do not expose signing credentials in repository files.
+
+Do not claim the workflow succeeded unless it has actually been executed successfully.
+
+==================================================
+25. DOCUMENTATION
+
+Create a comprehensive README explaining:
+
+- What the app does.
+- Technology stack.
+- Project structure.
+- How to open the project.
+- How to build the APK.
+- How to use GitHub Actions.
+- How to configure BGNinja.
+- What credentials are required.
+- Whether direct API authentication is supported.
+- How offline editing works.
+- Whether offline background removal is implemented.
+- How to install the APK.
+- How to test image rotation.
+- How to test PDF generation.
+- How to troubleshoot build errors.
+- How to add another background-removal provider.
+- How to protect API credentials.
+
+Include an .env.example file only for optional backend configuration, with placeholder values and no real secrets.
+
+Do not require this optional backend for local editing or PDF generation.
+
+==================================================
+26. IMPLEMENTATION PLAN
+
+Implement in this order.
+
+PHASE 1:
+Create the native Kotlin project and confirm that Gradle configuration is valid.
+
+PHASE 2:
+Implement image import, EXIF correction, shared editing state, and local project storage.
+
+PHASE 3:
+Implement rotation, cropping, transparency preservation, image adjustments, and undo/redo.
+
+PHASE 4:
+Implement the real-time image preview.
+
+PHASE 5:
+Implement the background-removal provider interface and BGNinja integration according to verified documentation.
+
+PHASE 6:
+Implement background color replacement and image exports.
+
+PHASE 7:
+Implement passport photo dimensions and print-sheet layout.
+
+PHASE 8:
+Implement PDF generation and print preview using the shared image and layout pipeline.
+
+PHASE 9:
+Implement Android sharing, document saving, and system printing.
+
+PHASE 10:
+Implement the complete UI and settings.
+
+PHASE 11:
+Write and run regression tests.
+
+PHASE 12:
+Create and validate the GitHub Actions workflow.
+
+Do not stop after generating the project structure or a partial interface.
+
+If the available development environment cannot complete the entire project in one pass, continue in stages while preserving a consistent architecture.
+
+==================================================
+27. FINAL ACCEPTANCE CRITERIA
+
+The application is acceptable only when:
+
+- It is a native Kotlin Android application.
+- It does not require a self-hosted server for local editing and printing.
+- Local editing works without internet.
+- PNG export works offline.
+- JPEG export works offline.
+- PDF generation works offline.
+- Rotation preserves transparency.
+- The live preview reflects the latest editing state.
+- The PDF contains the latest rotated and cropped image.
+- The print preview matches the PDF layout.
+- Physical photo dimensions are correct.
+- Multiple-copy printing works.
+- Multi-page PDF generation works.
+- Saved projects reopen correctly.
+- BGNinja integration follows the verified API specification.
+- API limitations are clearly documented.
+- Private API credentials are not hardcoded into the application.
+- Offline background removal is never falsely advertised.
+- Automated tests cover the critical bugs.
+- The Gradle project is complete.
+- GitHub Actions can build and upload the debug APK.
+- Build and test results are reported honestly.
+
+Start by designing the project architecture and implementing the shared image-processing pipeline.
+
+Fix the three original problems first:
+
+1. Rotation must not destroy transparency.
+2. The rotated image must appear correctly in the PDF.
+3. The live preview must display the latest image state.
+
+Then implement all remaining features.
+
+Prioritize correctness, privacy, reliability, and print accuracy over decorative features.

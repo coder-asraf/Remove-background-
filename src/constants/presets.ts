@@ -1,0 +1,143 @@
+import { PhotoPreset, PaperPreset, ImageProject } from '../types';
+
+export const PHOTO_PRESETS: PhotoPreset[] = [
+  {
+    id: 'passport_35x45',
+    name: '35 × 45 mm (EU / UK / Schengen)',
+    widthMm: 35,
+    heightMm: 45,
+    description: 'Standard biometric passport size used across Europe, UK, Australia & Canada.',
+    ratio: 35 / 45,
+  },
+  {
+    id: 'passport_2x2_in',
+    name: '2 × 2 inches (50.8 × 50.8 mm US / India)',
+    widthMm: 50.8,
+    heightMm: 50.8,
+    description: 'Standard US Passport, US Visa, and India OCI dimensions.',
+    ratio: 1,
+  },
+  {
+    id: 'passport_40x50',
+    name: '40 × 50 mm (ID / Visa)',
+    widthMm: 40,
+    heightMm: 50,
+    description: 'Common size for international visas and identity cards.',
+    ratio: 40 / 50,
+  },
+  {
+    id: 'passport_30x40',
+    name: '30 × 40 mm (Driver License / ID)',
+    widthMm: 30,
+    heightMm: 40,
+    description: 'Common size for driver licenses and employee badge cards.',
+    ratio: 30 / 40,
+  },
+  {
+    id: 'passport_33x48',
+    name: '33 × 48 mm (China Visa / Passport)',
+    widthMm: 33,
+    heightMm: 48,
+    description: 'Standard official Chinese passport and entry visa dimensions.',
+    ratio: 33 / 48,
+  },
+  {
+    id: 'passport_custom',
+    name: 'Custom Dimensions',
+    widthMm: 35,
+    heightMm: 45,
+    description: 'User specified width and height in mm or inches.',
+    ratio: 35 / 45,
+  },
+];
+
+export const PAPER_PRESETS: PaperPreset[] = [
+  {
+    id: 'paper_a4',
+    name: 'A4 (210 × 297 mm)',
+    widthMm: 210,
+    heightMm: 297,
+    standardDpi: 300,
+  },
+  {
+    id: 'paper_4x6',
+    name: '4 × 6 inches (101.6 × 152.4 mm)',
+    widthMm: 101.6,
+    heightMm: 152.4,
+    standardDpi: 300,
+  },
+  {
+    id: 'paper_letter',
+    name: 'US Letter (8.5 × 11 in / 215.9 × 279.4 mm)',
+    widthMm: 215.9,
+    heightMm: 279.4,
+    standardDpi: 300,
+  },
+  {
+    id: 'paper_5x7',
+    name: '5 × 7 inches (127 × 177.8 mm)',
+    widthMm: 127,
+    heightMm: 177.8,
+    standardDpi: 300,
+  },
+  {
+    id: 'paper_a5',
+    name: 'A5 (148 × 210 mm)',
+    widthMm: 148,
+    heightMm: 210,
+    standardDpi: 300,
+  },
+  {
+    id: 'paper_legal',
+    name: 'US Legal (8.5 × 14 in / 215.9 × 355.6 mm)',
+    widthMm: 215.9,
+    heightMm: 355.6,
+    standardDpi: 300,
+  },
+];
+
+export const COLOR_SWATCHES = [
+  { name: 'Transparent', value: 'transparent', hex: 'transparent' },
+  { name: 'White', value: '#FFFFFF', hex: '#FFFFFF' },
+  { name: 'Light Blue', value: '#C8DCF0', hex: '#C8DCF0' },
+  { name: 'Blue', value: '#0066CC', hex: '#0066CC' },
+  { name: 'Red', value: '#E53E3E', hex: '#E53E3E' },
+  { name: 'Light Gray', value: '#E2E8F0', hex: '#E2E8F0' },
+  { name: 'Gray', value: '#718096', hex: '#718096' },
+  { name: 'Black', value: '#000000', hex: '#000000' },
+];
+
+export function createDefaultProject(imageSrc: string = ''): ImageProject {
+  return {
+    projectId: 'proj_' + Math.random().toString(36).substring(2, 9),
+    originalImageSrc: imageSrc,
+    backgroundRemovedSrc: null,
+    rotationDegrees: 0,
+    cropRectangle: null,
+    horizontalFlip: false,
+    verticalFlip: false,
+    backgroundMode: 'TRANSPARENT',
+    backgroundColor: 'transparent',
+    brightness: 0,
+    contrast: 0,
+    saturation: 0,
+    sharpness: 0,
+    selectedPhotoPreset: 'passport_35x45',
+    customPhotoWidthMm: 35,
+    customPhotoHeightMm: 45,
+    selectedPaperPreset: 'paper_a4',
+    customPaperWidthMm: 210,
+    customPaperHeightMm: 297,
+    pageOrientation: 'PORTRAIT',
+    copies: 8,
+    marginMm: 10,
+    horizontalGapMm: 5,
+    verticalGapMm: 5,
+    cutGuidesEnabled: true,
+    cropMarksEnabled: true,
+    photoNumbersEnabled: false,
+    imageRevision: 1,
+    projectName: 'Passport Photo Project',
+    savedAt: Date.now(),
+  };
+}
