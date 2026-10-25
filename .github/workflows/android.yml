@@ -14,12 +14,8 @@ permissions:
 
 jobs:
   build:
-    name: Build and Test Android APK
+    name: Build Android APK
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        shell: bash
 
     steps:
       - name: Checkout Repository
@@ -34,58 +30,41 @@ jobs:
       - name: Set Up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Verify Android Project
+      - name: Restore Official Gradle Wrapper
         working-directory: android
         run: |
-          echo "Checking Android project files..."
-          test -f gradlew || {
-            echo "ERROR: android/gradlew not found"
-            exit 1
-          }
-          test -f gradle/wrapper/gradle-wrapper.properties || {
-            echo "ERROR: Gradle wrapper properties not found"
-            exit 1
-          }
+          curl -fsSL \
+            https://raw.githubusercontent.com/gradle/gradle/v8.11.1/gradlew \
+            -o gradlew
+
           chmod +x gradlew
-          echo "Android project files found."
 
-      - name: Diagnose Gradle Wrapper
+          test -f gradle/wrapper/gradle-wrapper.jar
+          test -f gradle/wrapper/gradle-wrapper.properties
+
+      - name: Verify Gradle
         working-directory: android
-        run: |
-          echo "Gradle wrapper file type:"
-          file gradlew
-
-          echo "Gradle wrapper first lines:"
-          head -n 5 gradlew
-
-          echo "Java version:"
-          java -version
-
-          echo "Gradle version:"
-          ./gradlew --version
+        run: ./gradlew --version
 
       - name: Run Unit Tests
         working-directory: android
-        run: |
-          ./gradlew --no-daemon testDebugUnitTest --stacktrace
+        run: ./gradlew testDebugUnitTest --stacktrace
 
       - name: Build Debug APK
         working-directory: android
-        run: |
-          ./gradlew --no-daemon assembleDebug --stacktrace
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: Verify APK
         run: |
-          APK_PATH="android/app/build/outputs/apk/debug/app-debug.apk"
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
 
-          if [ ! -f "$APK_PATH" ]; then
+          if [ ! -f "$APK" ]; then
             echo "ERROR: APK was not generated."
             find android -type f -name "*.apk" -print
             exit 1
           fi
 
-          echo "APK generated successfully:"
-          ls -lh "$APK_PATH"
+          ls -lh "$APK"
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
