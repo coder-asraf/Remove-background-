@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   build:
-    name: Build Android APK
+    name: Build and Test Android APK
     runs-on: ubuntu-latest
 
     steps:
@@ -27,32 +27,22 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Set Up Gradle
+      - name: Set Up Gradle 8.11.1
         uses: gradle/actions/setup-gradle@v4
-
-      - name: Restore Official Gradle Wrapper
-        working-directory: android
-        run: |
-          curl -fsSL \
-            https://raw.githubusercontent.com/gradle/gradle/v8.11.1/gradlew \
-            -o gradlew
-
-          chmod +x gradlew
-
-          test -f gradle/wrapper/gradle-wrapper.jar
-          test -f gradle/wrapper/gradle-wrapper.properties
+        with:
+          gradle-version: "8.11.1"
 
       - name: Verify Gradle
         working-directory: android
-        run: ./gradlew --version
+        run: gradle --version
 
       - name: Run Unit Tests
         working-directory: android
-        run: ./gradlew testDebugUnitTest --stacktrace
+        run: gradle testDebugUnitTest --stacktrace
 
       - name: Build Debug APK
         working-directory: android
-        run: ./gradlew assembleDebug --stacktrace
+        run: gradle assembleDebug --stacktrace
 
       - name: Verify APK
         run: |
@@ -64,9 +54,10 @@ jobs:
             exit 1
           fi
 
+          echo "APK generated successfully."
           ls -lh "$APK"
 
-      - name: Upload Debug APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: cutout-studio-debug-apk
